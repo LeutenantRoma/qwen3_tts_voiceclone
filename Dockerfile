@@ -21,6 +21,6 @@ COPY . .
 
 # Optional but recommended: preload model to avoid cold start
 RUN python3 -c "from qwen_tts import Qwen3TTSModel; \
-Qwen3TTSModel.from_pretrained('Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice')"
+Qwen3TTSModel.from_pretrained('Qwen/Qwen3-TTS-12Hz-1.7B-Base')"
 
 CMD ["python3", "handler.py"]
