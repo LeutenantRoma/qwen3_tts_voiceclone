@@ -50,8 +50,9 @@ def handler(job):
     text = job["input"].get("text", "")
     ref_audio = job["input"].get("ref_audio", "")
     ref_text = job["input"].get("ref_text", "")
+    language = job["input"].get("language", "")
 
-    waveform, sr = synthesize(text,ref_audio,ref_text)
+    waveform, sr = synthesize(text,ref_audio,ref_text, language)
     waveform = np.asarray(waveform, dtype="float32")
 
     buffer = io.BytesIO()
