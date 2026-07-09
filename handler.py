@@ -31,7 +31,7 @@ def synthesize(text: str, ref_audio: str, ref_text: str, language: str):
     audio_list, sr = model.generate_voice_clone(
         text=text,
         language=language,
-        ref_audio=(waveform_ref, sr_ref),
+        ref_audio=[waveform_ref, sr_ref],
         ref_text=ref_text,
     )
 
