@@ -17,16 +17,22 @@ def decode_base64_audio(base64_string):
     waveform, sr = sf.read(buffer)
     return waveform, sr
 
+
 def synthesize(text: str, ref_audio: str, ref_text: str, language: str):
-    
+
     model = Qwen3TTSModel.from_pretrained(
-    "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
-    device_map="cuda:0",
-    torch_dtype=torch.float16  # safer than bf16 unless you're on A100
+        "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
+        device_map="cuda:0",
+        torch_dtype=torch.float16,  # safer than bf16 unless you're on A100
     )
-    
+
     waveform_ref, sr_ref = decode_base64_audio(ref_audio)
-    ref_text = ref_text
+
+    # Down-mix to mono so we never hit the library's buggy stereo path.
+    # (qwen_tts tries to average channels in-place on an immutable tuple.)
+    if waveform_ref.ndim > 1:
+        waveform_ref = np.mean(waveform_ref, axis=-1)
+    waveform_ref = waveform_ref.astype(np.float32)
 
     audio_list, sr = model.generate_voice_clone(
         text=text,
@@ -44,6 +50,7 @@ def synthesize(text: str, ref_audio: str, ref_text: str, language: str):
 
     return waveform, sr
 
+
 # Handler itself
 # --------------------------------------------------------------
 def handler(job):
@@ -52,7 +59,7 @@ def handler(job):
     ref_text = job["input"].get("ref_text", "")
     language = job["input"].get("language", "")
 
-    waveform, sr = synthesize(text,ref_audio,ref_text, language)
+    waveform, sr = synthesize(text, ref_audio, ref_text, language)
     waveform = np.asarray(waveform, dtype="float32")
 
     buffer = io.BytesIO()
@@ -65,6 +72,7 @@ def handler(job):
         "audio": audio_base64
     }
 
-# Star the job
+
+# Start the job
 # ---------------------------------------------------
 runpod.serverless.start({"handler": handler})
